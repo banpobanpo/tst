@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub JSON 파일 수정</title>
+</head>
+<body>
+  <h1>GitHub JSON 파일 수정하기</h1>
+  <button id="updateButton">JSON 수정하기</button>
+
+  <script>
+    const updateButton = document.getElementById('updateButton');
+    const repoOwner = 'banpobanpo'; // GitHub 사용자명
+    const repoName = 'tst'; // 저장소 이름
+    const filePath = 'data.json'; // 수정할 JSON 파일 경로
+    const token = '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'; // GitHub Personal Access Token
+
+    updateButton.addEventListener('click', () => {
+      updateJsonFile('새로운 내용');
+    });
+
+    async function updateJsonFile(newContent) {
+      try {
+        // 1. 파일의 현재 데이터를 가져오기
+        const fileUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+        const response = await fetch(fileUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        const fileData = await response.json();
+        const sha = fileData.sha;  // 기존 파일의 SHA 값
+
+        // 2. 새로운 데이터로 JSON 파일 업데이트
+        const updatedContent = JSON.stringify({ message: newContent });
+        const base64Content = btoa(updatedContent);  // base64로 인코딩
+
+        const putData = {
+          message: 'Update JSON content',
+          committer: {
+            name: 'Your Name',
+            email: 'your-email@example.com'
+          },
+          content: base64Content,
+          sha: sha  // 기존 파일의 SHA 값
+        };
+
+        const updateResponse = await fetch(fileUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify(putData)
+        });
+
+        const updateResult = await updateResponse.json();
+        console.log('파일 업데이트 완료:', updateResult);
+      } catch (error) {
+        console.error('파일 업데이트 실패:', error);
+      }
+    }
+  </script>
+</body>
+</html>
